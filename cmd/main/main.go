@@ -34,6 +34,29 @@ func main() {
 	ctx := context.Background()
 	qtx := queries
 
+	option := 2
+
+	for option != 0 {
+		fmt.Println("What would you like to do?")
+		fmt.Println("1 - Load games into DB")
+		fmt.Println("2 - Load champions into DB")
+		fmt.Println("Press 0 to finish the program")
+
+		fmt.Scan(&option)
+
+		switch option {
+		case 1:
+			addGamesToDB(regions, ctx, *qtx)
+		case 2:
+			addChampionsToDB(ctx, *qtx)
+		default:
+			fmt.Println("Invalid option!")
+		}
+
+	}
+}
+
+func addGamesToDB(regions []string, ctx context.Context, qtx db.Queries) {
 	for _, region := range regions {
 
 		resp, err := os.ReadFile(fmt.Sprintf("../../regions_data/%s.json", region))
@@ -41,7 +64,7 @@ func main() {
 			log.Fatal("failed to read file:", err)
 		}
 
-		body, err := parser.Parse(resp)
+		body, err := parser.ParseCargo(resp)
 		if err != nil {
 			log.Println("parse error:", err)
 			continue
@@ -96,4 +119,24 @@ func main() {
 
 		fmt.Println("Migrated succesfully!")
 	}
+}
+
+func addChampionsToDB(ctx context.Context, qtx db.Queries) {
+	resp, err := os.ReadFile("../../champions_data/champions.json")
+	if err != nil {
+		log.Fatal("failed to read file")
+	}
+
+	body, err := parser.ParseChampion(resp)
+	if err != nil {
+		log.Fatal("parse failed:", err)
+	}
+
+	for name := range body.Data {
+		_, err := qtx.AddChampions(ctx, name)
+		if err != nil {
+			log.Fatal("insert failed: ", err)
+		}
+	}
+
 }

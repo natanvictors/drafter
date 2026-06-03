@@ -49,7 +49,7 @@ type Cargoquery struct {
 	} `json:"cargoquery"`
 }
 
-func Parse(data []byte) (Cargoquery, error) {
+func ParseCargo(data []byte) (Cargoquery, error) {
 	var cargoquery Cargoquery
 	err := json.Unmarshal(data, &cargoquery)
 	return cargoquery, err

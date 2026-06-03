@@ -3,7 +3,6 @@ package client
 import (
 	"io"
 	"net/http"
-	"time"
 )
 
 type Client struct {
@@ -11,9 +10,7 @@ type Client struct {
 }
 
 func New() *Client {
-	return &Client{
-		http: &http.Client{Timeout: 15 * time.Second},
-	}
+	return &Client{}
 }
 
 func (c *Client) Fetch(url string) ([]byte, error) {
