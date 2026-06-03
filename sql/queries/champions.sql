@@ -23,11 +23,11 @@ SET
     losses_adc=$14,
     wins_sup=$15,
     losses_sup=$16
-WHERE ID = $17
+WHERE champ_name = $17
 RETURNING *;
 
 -- name: ChangeRoles :one
 UPDATE champions
 SET ingame_role = $1
-WHERE ID = $2
+WHERE champ_name = $2
 RETURNING *;

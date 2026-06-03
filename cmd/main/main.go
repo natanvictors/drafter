@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -132,11 +133,19 @@ func addChampionsToDB(ctx context.Context, qtx db.Queries) {
 		log.Fatal("parse failed:", err)
 	}
 
-	for name := range body.Data {
-		_, err := qtx.AddChampions(ctx, name)
+	fmt.Printf("Champions loaded: %d\n", len(body.Data))
+
+	for _, raw := range body.Data {
+		var name parser.Champion
+
+		json.Unmarshal(raw, &name)
+
+		_, err := qtx.AddChampions(ctx, name.Name)
 		if err != nil {
 			log.Fatal("insert failed: ", err)
 		}
+
+		fmt.Printf("Added champion %s\n", name)
 	}
 
 }

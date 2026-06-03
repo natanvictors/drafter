@@ -47,17 +47,17 @@ func (q *Queries) AddChampions(ctx context.Context, champName string) (Champion,
 const changeRoles = `-- name: ChangeRoles :one
 UPDATE champions
 SET ingame_role = $1
-WHERE ID = $2
+WHERE champ_name = $2
 RETURNING id, champ_name, times_picked, picked_top, picked_jungle, picked_mid, picked_adc, picked_sup, wins_top, losses_top, wins_jg, losses_jg, wins_mid, losses_mid, wins_adc, losses_adc, wins_sup, losses_sup, ingame_role
 `
 
 type ChangeRolesParams struct {
 	IngameRole sql.NullString
-	ID         int32
+	ChampName  string
 }
 
 func (q *Queries) ChangeRoles(ctx context.Context, arg ChangeRolesParams) (Champion, error) {
-	row := q.db.QueryRowContext(ctx, changeRoles, arg.IngameRole, arg.ID)
+	row := q.db.QueryRowContext(ctx, changeRoles, arg.IngameRole, arg.ChampName)
 	var i Champion
 	err := row.Scan(
 		&i.ID,
@@ -102,7 +102,7 @@ SET
     losses_adc=$14,
     wins_sup=$15,
     losses_sup=$16
-WHERE ID = $17
+WHERE champ_name = $17
 RETURNING id, champ_name, times_picked, picked_top, picked_jungle, picked_mid, picked_adc, picked_sup, wins_top, losses_top, wins_jg, losses_jg, wins_mid, losses_mid, wins_adc, losses_adc, wins_sup, losses_sup, ingame_role
 `
 
@@ -123,7 +123,7 @@ type UpdateStatusParams struct {
 	LossesAdc    sql.NullInt32
 	WinsSup      sql.NullInt32
 	LossesSup    sql.NullInt32
-	ID           int32
+	ChampName    string
 }
 
 func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (Champion, error) {
@@ -144,7 +144,7 @@ func (q *Queries) UpdateStatus(ctx context.Context, arg UpdateStatusParams) (Cha
 		arg.LossesAdc,
 		arg.WinsSup,
 		arg.LossesSup,
-		arg.ID,
+		arg.ChampName,
 	)
 	var i Champion
 	err := row.Scan(
