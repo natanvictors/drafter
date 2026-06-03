@@ -1,0 +1,46 @@
+-- name: CreateGame :one
+INSERT INTO games (
+    tournament,
+    team1_role1,
+	team1_role2,
+	team1_role3,
+	team1_role4,
+	team1_role5,
+	team2_role1,
+	team2_role2,
+	team2_role3,
+	team2_role4,
+	team2_role5,
+	team1_ban1,
+	team1_ban2,
+	team1_ban3,
+	team1_ban4,
+	team1_ban5,
+	team1_pick1,
+	team1_pick2,
+	team1_pick3,
+	team1_pick4,
+	team1_pick5,
+	team2_ban1,
+	team2_ban2,
+	team2_ban3,
+	team2_ban4,
+	team2_ban5,
+	team2_pick1,
+	team2_pick2,
+	team2_pick3,
+	team2_pick4,
+	team2_pick5,
+	team1,
+	team2,
+	winner,
+	team1_picks_by_role_order,
+	team2_picks_by_role_order,
+	game_id,
+	match_id,
+	date_time_utc
+) 
+VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39
+)
+RETURNING *;
