@@ -1,6 +1,8 @@
 package parser
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type Cargoquery struct {
 	Cargoquery []struct {

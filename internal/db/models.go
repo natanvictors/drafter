@@ -6,6 +6,7 @@ package db
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Champion struct {
@@ -70,5 +71,10 @@ type Game struct {
 	Team2PicksByRoleOrder string
 	GameID                string
 	MatchID               string
-	DateTimeUtc           string
+	DateTimeUtc           time.Time
+}
+
+type UpdateLog struct {
+	Region        string
+	LastUpdatedAt time.Time
 }

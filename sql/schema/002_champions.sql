@@ -2,7 +2,7 @@
 
 CREATE TABLE champions (
     ID SERIAL PRIMARY KEY,
-    champ_name TEXT NOT NULL,
+    champ_name TEXT NOT NULL UNIQUE,
     times_picked INTEGER DEFAULT 0,
     picked_top INTEGER DEFAULT 0,
     picked_jungle INTEGER DEFAULT 0,

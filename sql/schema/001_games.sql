@@ -38,9 +38,9 @@ CREATE TABLE games (
 	winner TEXT NOT NULL,
 	team1_picks_by_role_order TEXT NOT NULL,
 	team2_picks_by_role_order TEXT NOT NULL,
-	game_id TEXT NOT NULL,
+	game_id TEXT UNIQUE NOT NULL,
 	match_id TEXT NOT NULL,
-	date_time_utc TEXT NOT NULL
+	date_time_utc TIMESTAMPTZ NOT NULL
 );
 
 

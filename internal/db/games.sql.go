@@ -7,182 +7,217 @@ package db
 
 import (
 	"context"
+	"time"
+
+	"github.com/lib/pq"
 )
 
-const createGame = `-- name: CreateGame :one
+const upsertGames = `-- name: UpsertGames :exec
 INSERT INTO games (
     tournament,
     team1_role1,
-	team1_role2,
-	team1_role3,
-	team1_role4,
-	team1_role5,
-	team2_role1,
-	team2_role2,
-	team2_role3,
-	team2_role4,
-	team2_role5,
-	team1_ban1,
-	team1_ban2,
-	team1_ban3,
-	team1_ban4,
-	team1_ban5,
-	team1_pick1,
-	team1_pick2,
-	team1_pick3,
-	team1_pick4,
-	team1_pick5,
-	team2_ban1,
-	team2_ban2,
-	team2_ban3,
-	team2_ban4,
-	team2_ban5,
-	team2_pick1,
-	team2_pick2,
-	team2_pick3,
-	team2_pick4,
-	team2_pick5,
-	team1,
-	team2,
-	winner,
-	team1_picks_by_role_order,
-	team2_picks_by_role_order,
-	game_id,
-	match_id,
-	date_time_utc
-) 
-VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39
+    team1_role2,
+    team1_role3,
+    team1_role4,
+    team1_role5,
+    team2_role1,
+    team2_role2,
+    team2_role3,
+    team2_role4,
+    team2_role5,
+    team1_ban1,
+    team1_ban2,
+    team1_ban3,
+    team1_ban4,
+    team1_ban5,
+    team1_pick1,
+    team1_pick2,
+    team1_pick3,
+    team1_pick4,
+    team1_pick5,
+    team2_ban1,
+    team2_ban2,
+    team2_ban3,
+    team2_ban4,
+    team2_ban5,
+    team2_pick1,
+    team2_pick2,
+    team2_pick3,
+    team2_pick4,
+    team2_pick5,
+    team1,
+    team2,
+    winner,
+    team1_picks_by_role_order,
+    team2_picks_by_role_order,
+    game_id,
+    match_id,
+    date_time_utc
 )
-RETURNING id, tournament, team1_role1, team1_role2, team1_role3, team1_role4, team1_role5, team2_role1, team2_role2, team2_role3, team2_role4, team2_role5, team1_ban1, team1_ban2, team1_ban3, team1_ban4, team1_ban5, team1_pick1, team1_pick2, team1_pick3, team1_pick4, team1_pick5, team2_ban1, team2_ban2, team2_ban3, team2_ban4, team2_ban5, team2_pick1, team2_pick2, team2_pick3, team2_pick4, team2_pick5, team1, team2, winner, team1_picks_by_role_order, team2_picks_by_role_order, game_id, match_id, date_time_utc
+SELECT
+    unnest($1::text[]),
+    unnest($2::text[]),
+    unnest($3::text[]),
+    unnest($4::text[]),
+    unnest($5::text[]),
+    unnest($6::text[]),
+    unnest($7::text[]),
+    unnest($8::text[]),
+    unnest($9::text[]),
+    unnest($10::text[]),
+    unnest($11::text[]),
+    unnest($12::text[]),
+    unnest($13::text[]),
+    unnest($14::text[]),
+    unnest($15::text[]),
+    unnest($16::text[]),
+    unnest($17::text[]),
+    unnest($18::text[]),
+    unnest($19::text[]),
+    unnest($20::text[]),
+    unnest($21::text[]),
+    unnest($22::text[]),
+    unnest($23::text[]),
+    unnest($24::text[]),
+    unnest($25::text[]),
+    unnest($26::text[]),
+    unnest($27::text[]),
+    unnest($28::text[]),
+    unnest($29::text[]),
+    unnest($30::text[]),
+    unnest($31::text[]),
+    unnest($32::text[]),
+    unnest($33::text[]),
+    unnest($34::text[]),
+    unnest($35::text[]),
+    unnest($36::text[]),
+    unnest($37::text[]),
+    unnest($38::text[]),
+    unnest($39::timestamptz[])
+ON CONFLICT (game_id) DO UPDATE SET
+    tournament                = EXCLUDED.tournament,
+    team1_role1               = EXCLUDED.team1_role1,
+    team1_role2               = EXCLUDED.team1_role2,
+    team1_role3               = EXCLUDED.team1_role3,
+    team1_role4               = EXCLUDED.team1_role4,
+    team1_role5               = EXCLUDED.team1_role5,
+    team2_role1               = EXCLUDED.team2_role1,
+    team2_role2               = EXCLUDED.team2_role2,
+    team2_role3               = EXCLUDED.team2_role3,
+    team2_role4               = EXCLUDED.team2_role4,
+    team2_role5               = EXCLUDED.team2_role5,
+    team1_ban1                = EXCLUDED.team1_ban1,
+    team1_ban2                = EXCLUDED.team1_ban2,
+    team1_ban3                = EXCLUDED.team1_ban3,
+    team1_ban4                = EXCLUDED.team1_ban4,
+    team1_ban5                = EXCLUDED.team1_ban5,
+    team1_pick1               = EXCLUDED.team1_pick1,
+    team1_pick2               = EXCLUDED.team1_pick2,
+    team1_pick3               = EXCLUDED.team1_pick3,
+    team1_pick4               = EXCLUDED.team1_pick4,
+    team1_pick5               = EXCLUDED.team1_pick5,
+    team2_ban1                = EXCLUDED.team2_ban1,
+    team2_ban2                = EXCLUDED.team2_ban2,
+    team2_ban3                = EXCLUDED.team2_ban3,
+    team2_ban4                = EXCLUDED.team2_ban4,
+    team2_ban5                = EXCLUDED.team2_ban5,
+    team2_pick1               = EXCLUDED.team2_pick1,
+    team2_pick2               = EXCLUDED.team2_pick2,
+    team2_pick3               = EXCLUDED.team2_pick3,
+    team2_pick4               = EXCLUDED.team2_pick4,
+    team2_pick5               = EXCLUDED.team2_pick5,
+    team1                     = EXCLUDED.team1,
+    team2                     = EXCLUDED.team2,
+    winner                    = EXCLUDED.winner,
+    team1_picks_by_role_order = EXCLUDED.team1_picks_by_role_order,
+    team2_picks_by_role_order = EXCLUDED.team2_picks_by_role_order,
+    match_id                  = EXCLUDED.match_id,
+    date_time_utc             = EXCLUDED.date_time_utc
 `
 
-type CreateGameParams struct {
-	Tournament            string
-	Team1Role1            string
-	Team1Role2            string
-	Team1Role3            string
-	Team1Role4            string
-	Team1Role5            string
-	Team2Role1            string
-	Team2Role2            string
-	Team2Role3            string
-	Team2Role4            string
-	Team2Role5            string
-	Team1Ban1             string
-	Team1Ban2             string
-	Team1Ban3             string
-	Team1Ban4             string
-	Team1Ban5             string
-	Team1Pick1            string
-	Team1Pick2            string
-	Team1Pick3            string
-	Team1Pick4            string
-	Team1Pick5            string
-	Team2Ban1             string
-	Team2Ban2             string
-	Team2Ban3             string
-	Team2Ban4             string
-	Team2Ban5             string
-	Team2Pick1            string
-	Team2Pick2            string
-	Team2Pick3            string
-	Team2Pick4            string
-	Team2Pick5            string
-	Team1                 string
-	Team2                 string
-	Winner                string
-	Team1PicksByRoleOrder string
-	Team2PicksByRoleOrder string
-	GameID                string
-	MatchID               string
-	DateTimeUtc           string
+type UpsertGamesParams struct {
+	Column1  []string
+	Column2  []string
+	Column3  []string
+	Column4  []string
+	Column5  []string
+	Column6  []string
+	Column7  []string
+	Column8  []string
+	Column9  []string
+	Column10 []string
+	Column11 []string
+	Column12 []string
+	Column13 []string
+	Column14 []string
+	Column15 []string
+	Column16 []string
+	Column17 []string
+	Column18 []string
+	Column19 []string
+	Column20 []string
+	Column21 []string
+	Column22 []string
+	Column23 []string
+	Column24 []string
+	Column25 []string
+	Column26 []string
+	Column27 []string
+	Column28 []string
+	Column29 []string
+	Column30 []string
+	Column31 []string
+	Column32 []string
+	Column33 []string
+	Column34 []string
+	Column35 []string
+	Column36 []string
+	Column37 []string
+	Column38 []string
+	Column39 []time.Time
 }
 
-func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (Game, error) {
-	row := q.db.QueryRowContext(ctx, createGame,
-		arg.Tournament,
-		arg.Team1Role1,
-		arg.Team1Role2,
-		arg.Team1Role3,
-		arg.Team1Role4,
-		arg.Team1Role5,
-		arg.Team2Role1,
-		arg.Team2Role2,
-		arg.Team2Role3,
-		arg.Team2Role4,
-		arg.Team2Role5,
-		arg.Team1Ban1,
-		arg.Team1Ban2,
-		arg.Team1Ban3,
-		arg.Team1Ban4,
-		arg.Team1Ban5,
-		arg.Team1Pick1,
-		arg.Team1Pick2,
-		arg.Team1Pick3,
-		arg.Team1Pick4,
-		arg.Team1Pick5,
-		arg.Team2Ban1,
-		arg.Team2Ban2,
-		arg.Team2Ban3,
-		arg.Team2Ban4,
-		arg.Team2Ban5,
-		arg.Team2Pick1,
-		arg.Team2Pick2,
-		arg.Team2Pick3,
-		arg.Team2Pick4,
-		arg.Team2Pick5,
-		arg.Team1,
-		arg.Team2,
-		arg.Winner,
-		arg.Team1PicksByRoleOrder,
-		arg.Team2PicksByRoleOrder,
-		arg.GameID,
-		arg.MatchID,
-		arg.DateTimeUtc,
+func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) error {
+	_, err := q.db.ExecContext(ctx, upsertGames,
+		pq.Array(arg.Column1),
+		pq.Array(arg.Column2),
+		pq.Array(arg.Column3),
+		pq.Array(arg.Column4),
+		pq.Array(arg.Column5),
+		pq.Array(arg.Column6),
+		pq.Array(arg.Column7),
+		pq.Array(arg.Column8),
+		pq.Array(arg.Column9),
+		pq.Array(arg.Column10),
+		pq.Array(arg.Column11),
+		pq.Array(arg.Column12),
+		pq.Array(arg.Column13),
+		pq.Array(arg.Column14),
+		pq.Array(arg.Column15),
+		pq.Array(arg.Column16),
+		pq.Array(arg.Column17),
+		pq.Array(arg.Column18),
+		pq.Array(arg.Column19),
+		pq.Array(arg.Column20),
+		pq.Array(arg.Column21),
+		pq.Array(arg.Column22),
+		pq.Array(arg.Column23),
+		pq.Array(arg.Column24),
+		pq.Array(arg.Column25),
+		pq.Array(arg.Column26),
+		pq.Array(arg.Column27),
+		pq.Array(arg.Column28),
+		pq.Array(arg.Column29),
+		pq.Array(arg.Column30),
+		pq.Array(arg.Column31),
+		pq.Array(arg.Column32),
+		pq.Array(arg.Column33),
+		pq.Array(arg.Column34),
+		pq.Array(arg.Column35),
+		pq.Array(arg.Column36),
+		pq.Array(arg.Column37),
+		pq.Array(arg.Column38),
+		pq.Array(arg.Column39),
 	)
-	var i Game
-	err := row.Scan(
-		&i.ID,
-		&i.Tournament,
-		&i.Team1Role1,
-		&i.Team1Role2,
-		&i.Team1Role3,
-		&i.Team1Role4,
-		&i.Team1Role5,
-		&i.Team2Role1,
-		&i.Team2Role2,
-		&i.Team2Role3,
-		&i.Team2Role4,
-		&i.Team2Role5,
-		&i.Team1Ban1,
-		&i.Team1Ban2,
-		&i.Team1Ban3,
-		&i.Team1Ban4,
-		&i.Team1Ban5,
-		&i.Team1Pick1,
-		&i.Team1Pick2,
-		&i.Team1Pick3,
-		&i.Team1Pick4,
-		&i.Team1Pick5,
-		&i.Team2Ban1,
-		&i.Team2Ban2,
-		&i.Team2Ban3,
-		&i.Team2Ban4,
-		&i.Team2Ban5,
-		&i.Team2Pick1,
-		&i.Team2Pick2,
-		&i.Team2Pick3,
-		&i.Team2Pick4,
-		&i.Team2Pick5,
-		&i.Team1,
-		&i.Team2,
-		&i.Winner,
-		&i.Team1PicksByRoleOrder,
-		&i.Team2PicksByRoleOrder,
-		&i.GameID,
-		&i.MatchID,
-		&i.DateTimeUtc,
-	)
-	return i, err
+	return err
 }
