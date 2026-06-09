@@ -1,6 +1,7 @@
 -- name: UpsertGames :exec
 INSERT INTO games (
     tournament,
+	patch,
     team1_role1,
     team1_role2,
     team1_role3,
@@ -79,9 +80,11 @@ SELECT
     unnest($36::text[]),
     unnest($37::text[]),
     unnest($38::text[]),
-    unnest($39::timestamptz[])
+    unnest($39::text[]),
+    unnest($40::timestamptz[])
 ON CONFLICT (game_id) DO UPDATE SET
     tournament                = EXCLUDED.tournament,
+	patch                     = EXCLUDED.patch,
     team1_role1               = EXCLUDED.team1_role1,
     team1_role2               = EXCLUDED.team1_role2,
     team1_role3               = EXCLUDED.team1_role3,

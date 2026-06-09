@@ -10,8 +10,12 @@ import (
 )
 
 type Champion struct {
-	ID           int32
-	ChampName    string
+	ID        int32
+	ChampName string
+}
+
+type ChampionsDatum struct {
+	ChampID      int32
 	TimesPicked  sql.NullInt32
 	PickedTop    sql.NullInt32
 	PickedJungle sql.NullInt32
@@ -28,11 +32,11 @@ type Champion struct {
 	LossesAdc    sql.NullInt32
 	WinsSup      sql.NullInt32
 	LossesSup    sql.NullInt32
-	IngameRole   sql.NullString
 }
 
 type Game struct {
 	ID                    int32
+	Patch                 sql.NullString
 	Tournament            string
 	Team1Role1            string
 	Team1Role2            string

@@ -15,6 +15,7 @@ import (
 const upsertGames = `-- name: UpsertGames :exec
 INSERT INTO games (
     tournament,
+	patch,
     team1_role1,
     team1_role2,
     team1_role3,
@@ -93,9 +94,11 @@ SELECT
     unnest($36::text[]),
     unnest($37::text[]),
     unnest($38::text[]),
-    unnest($39::timestamptz[])
+    unnest($39::text[]),
+    unnest($40::timestamptz[])
 ON CONFLICT (game_id) DO UPDATE SET
     tournament                = EXCLUDED.tournament,
+	patch                     = EXCLUDED.patch,
     team1_role1               = EXCLUDED.team1_role1,
     team1_role2               = EXCLUDED.team1_role2,
     team1_role3               = EXCLUDED.team1_role3,
@@ -174,7 +177,8 @@ type UpsertGamesParams struct {
 	Column36 []string
 	Column37 []string
 	Column38 []string
-	Column39 []time.Time
+	Column39 []string
+	Column40 []time.Time
 }
 
 func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) error {
@@ -218,6 +222,7 @@ func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) error 
 		pq.Array(arg.Column37),
 		pq.Array(arg.Column38),
 		pq.Array(arg.Column39),
+		pq.Array(arg.Column40),
 	)
 	return err
 }

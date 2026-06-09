@@ -2,6 +2,7 @@
 
 CREATE TABLE games (
 	ID SERIAL NOT NULL PRIMARY KEY,
+	patch TEXT,
 	tournament TEXT NOT NULL,
 	team1_role1 TEXT NOT NULL,
 	team1_role2 TEXT NOT NULL,

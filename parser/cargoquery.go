@@ -8,6 +8,7 @@ type Cargoquery struct {
 	Cargoquery []struct {
 		Title struct {
 			Page                  string `json:"Page"`
+			Patch                 string `json:"Patch"`
 			Team1Role1            string `json:"Team1Role1"`
 			Team1Role2            string `json:"Team1Role2"`
 			Team1Role3            string `json:"Team1Role3"`
