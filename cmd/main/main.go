@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
@@ -159,14 +161,34 @@ func updateChampionData(ctx context.Context, qtx *db.Queries, region string, c *
 }
 
 func addChampionsToDB(ctx context.Context, qtx db.Queries) {
-	resp, err := os.ReadFile("../../champions_data/champions.json")
+	resp, err := http.Get("https://ddragon.leagueoflegends.com/api/versions.json")
 	if err != nil {
-		log.Fatal("failed to read file")
+		log.Fatal("failed to get version")
+	}
+	defer resp.Body.Close()
+
+	var versions []string
+
+	err = json.NewDecoder(resp.Body).Decode(&versions)
+	if err != nil {
+		log.Fatal("failed to decode versions API")
 	}
 
-	body, err := parser.ParseChampion(resp)
+	resp.Body.Close()
+
+	resp, err = http.Get(fmt.Sprintf("https://ddragon.leagueoflegends.com/cdn/%s/data/en_US/champion.json", versions[0]))
 	if err != nil {
-		log.Fatal("parse failed:", err)
+		log.Fatal("failed to get champion API")
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal("read failed:", err)
+	}
+
+	body, err := parser.ParseChampion(data)
+	if err != nil {
+		log.Fatal("failed to parse data:", err)
 	}
 
 	fmt.Printf("Champions loaded: %d\n", len(body.Data))
