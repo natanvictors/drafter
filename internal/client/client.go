@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/natanvictors/drafter/parser"
+	"github.com/natanvictors/drafter/internal/parser"
 )
 
 type Client struct {

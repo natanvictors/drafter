@@ -14,9 +14,9 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/natanvictors/drafter/client"
+	"github.com/natanvictors/drafter/internal/client"
 	"github.com/natanvictors/drafter/internal/db"
-	"github.com/natanvictors/drafter/parser"
+	"github.com/natanvictors/drafter/internal/parser"
 )
 
 func main() {
