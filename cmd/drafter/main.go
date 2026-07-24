@@ -35,6 +35,10 @@ func main() {
 	}
 	defer conn.Close()
 
+	if err := db.Migrate(conn); err != nil {
+		log.Fatal("Failed to migrate database: ", err)
+	}
+
 	queries := db.New(conn)
 
 	ctx := context.Background()
