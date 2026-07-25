@@ -10,10 +10,13 @@ services:
     ports:
       - "65432:5432"
     volumes:
-      - ./postgres_data:/var/lib/postgresql
+      - drafter_postgres_data:/var/lib/postgresql
   drafter:
     build: .
     container_name: drafter
     restart: unless-stopped
     environment:
       - DB_URL=postgresql://postgres:whateva@postgres:5432/drafter?sslmode=disable
+    env_file: .env
+volumes:
+  drafter_postgres_data:
