@@ -14,7 +14,7 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/natanvictors/drafter/internal/client"
+	cargo "github.com/natanvictors/drafter/internal/client"
 	"github.com/natanvictors/drafter/internal/db"
 	"github.com/natanvictors/drafter/internal/parser"
 )
@@ -23,6 +23,11 @@ func main() {
 
 	regions := []string{"CBLOL", "LCK", "LPL", "LEC", "LCS"}
 	godotenv.Load("../../.env")
+
+	// updateTime, err := strconv.Atoi(os.Getenv("UPDATE_TIME"))
+	// if err != nil {
+	// 	log.Fatal("Failed to get envvar UPDATE_TIME")
+	// }
 
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
@@ -44,7 +49,7 @@ func main() {
 	ctx := context.Background()
 	qtx := queries
 
-	client, err := client.New()
+	client, err := cargo.New(os.Getenv("API_BOT_NAME"), os.Getenv("API_BOT_PASSWORD"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,22 +58,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//updateInterval := time.Duration(updateTime) * time.Second
 
 	addChampionsToDB(ctx, *qtx)
-
 	for _, region := range regions {
-		record, err := qtx.GetUpdateRecord(ctx, region)
-		if err == nil && time.Since(record.LastUpdatedAt) < 12*time.Hour {
-			fmt.Printf("Skipping %s, updated recently\n", region)
-			continue
-		}
+		//record, err := qtx.GetUpdateRecord(ctx, region)
+		// timeUntilUpdate := updateInterval - time.Since(record.LastUpdatedAt)
+		// if err == nil && timeUntilUpdate > 0 {
+		// 	fmt.Printf("Skipping %s, updated recently\nTime until next update: %x\n", region, timeUntilUpdate)
+		// 	continue
+		// }
 
 		updateChampionData(ctx, qtx, region, client)
 	}
 
 }
 
-func updateChampionData(ctx context.Context, qtx *db.Queries, region string, c *client.Client) {
+func updateChampionData(ctx context.Context, qtx *db.Queries, region string, c *cargo.Client) {
 
 	urlValues := url.Values{
 		"action":   {"cargoquery"},
@@ -77,7 +83,7 @@ func updateChampionData(ctx context.Context, qtx *db.Queries, region string, c *
 		"fields":   {"ScoreboardGames.Patch,PicksAndBansS7._pageName=Page,PicksAndBansS7.Team1Role1,PicksAndBansS7.Team1Role2,PicksAndBansS7.Team1Role3,PicksAndBansS7.Team1Role4,PicksAndBansS7.Team1Role5,PicksAndBansS7.Team2Role1,PicksAndBansS7.Team2Role2,PicksAndBansS7.Team2Role3,PicksAndBansS7.Team2Role4,PicksAndBansS7.Team2Role5,PicksAndBansS7.Team1Ban1,PicksAndBansS7.Team1Ban2,PicksAndBansS7.Team1Ban3,PicksAndBansS7.Team1Ban4,PicksAndBansS7.Team1Ban5,PicksAndBansS7.Team1Pick1,PicksAndBansS7.Team1Pick2,PicksAndBansS7.Team1Pick3,PicksAndBansS7.Team1Pick4,PicksAndBansS7.Team1Pick5,PicksAndBansS7.Team2Ban1,PicksAndBansS7.Team2Ban2,PicksAndBansS7.Team2Ban3,PicksAndBansS7.Team2Ban4,PicksAndBansS7.Team2Ban5,PicksAndBansS7.Team2Pick1,PicksAndBansS7.Team2Pick2,PicksAndBansS7.Team2Pick3,PicksAndBansS7.Team2Pick4,PicksAndBansS7.Team2Pick5,PicksAndBansS7.Team1,PicksAndBansS7.Team2,PicksAndBansS7.Winner,PicksAndBansS7.Team1PicksByRoleOrder,PicksAndBansS7.Team2PicksByRoleOrder,PicksAndBansS7.GameId,PicksAndBansS7.MatchId,ScoreboardGames.DateTime_UTC"},
 		"join_on":  {"PicksAndBansS7.GameId=ScoreboardGames.GameId"},
 		"order_by": {"ScoreboardGames.DateTime_UTC DESC"},
-		"limit":    {"500"},
+		"limit":    {"200"},
 	}
 
 	urlValues.Set("where", fmt.Sprintf("PicksAndBansS7._pageName LIKE '%%%s/2026%%' AND ScoreboardGames.DateTime_UTC IS NOT NULL AND PicksAndBansS7.Winner != ''", region))
@@ -89,12 +95,12 @@ func updateChampionData(ctx context.Context, qtx *db.Queries, region string, c *
 	if err != nil {
 		log.Println("parse error:", err)
 	}
-
-	log.Printf("Games found for %s: %d\n", region, len(body.Cargoquery))
+	fmt.Println("https://lol.fandom.com/api.php?" + urlValues.Encode())
+	log.Printf("Games found for %s: %d\n", region, len(body.Cargoresponse))
 
 	params := db.UpsertGamesParams{}
 
-	for _, game := range body.Cargoquery {
+	for _, game := range body.Cargoresponse {
 		t := game.Title
 
 		log.Printf("Page: %q", t.Page)
