@@ -1,4 +1,4 @@
-package client
+package cargo
 
 import (
 	"fmt"
@@ -6,23 +6,26 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"os"
 
 	"github.com/natanvictors/drafter/internal/parser"
 )
 
 type Client struct {
-	http *http.Client
+	http     *http.Client
+	user     string
+	password string
 }
 
-func New() (*Client, error) {
+func New(user string, password string) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cookie jar: %w", err)
 	}
 
 	return &Client{
-		http: &http.Client{Jar: jar},
+		http:     &http.Client{Jar: jar},
+		user:     user,
+		password: password,
 	}, nil
 }
 
@@ -60,10 +63,10 @@ func (c *Client) Login() error {
 	}
 	resp.Body.Close()
 
-	resp, err = c.http.PostForm("https://lol.fandom.com/api.php", url.Values{
+	_, err = c.http.PostForm("https://lol.fandom.com/api.php", url.Values{
 		"action":     {"login"},
-		"lgname":     {os.Getenv("API_BOT_NAME")},
-		"lgpassword": {os.Getenv("API_BOT_PASSWORD")},
+		"lgname":     {c.user},
+		"lgpassword": {c.password},
 		"lgtoken":    {data.Query.Tokens.LoginToken},
 		"format":     {"json"},
 	})

@@ -1,0 +1,22 @@
+name: docker-drafter
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: drafter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: whateva
+    ports:
+      - "65432:5432"
+    volumes:
+      - drafter_postgres_data:/var/lib/postgresql
+  drafter:
+    build: .
+    container_name: drafter
+    restart: unless-stopped
+    environment:
+      - DB_URL=postgresql://postgres:whateva@postgres:5432/drafter?sslmode=disable
+    env_file: .env
+volumes:
+  drafter_postgres_data:
