@@ -4,27 +4,14 @@ DELETE FROM champions_data;
 -- name: UpdateChampionStats :exec
 
 WITH picks AS (
-    SELECT champ, role, won FROM (
-        SELECT team1_pick1 AS champ, team1_role1 AS role, (winner='1') AS won FROM games
-        UNION ALL
-        SELECT team1_pick2, team1_role2, (winner = '1') FROM games
-        UNION ALL
-        SELECT team1_pick3, team1_role3, (winner = '1') FROM games
-        UNION ALL
-        SELECT team1_pick4, team1_role4, (winner = '1') FROM games
-        UNION ALL
-        SELECT team1_pick5, team1_role5, (winner = '1') FROM games
-        UNION ALL
-        SELECT team2_pick1, team2_role1, (winner = '2') FROM games
-        UNION ALL
-        SELECT team2_pick2, team2_role2, (winner = '2') FROM games
-        UNION ALL
-        SELECT team2_pick3, team2_role3, (winner = '2') FROM games
-        UNION ALL
-        SELECT team2_pick4, team2_role4, (winner = '2') FROM games
-        UNION ALL
-        SELECT team2_pick5, team2_role5, (winner = '2') FROM games
-    )sub
+    SELECT p.champ, p.role (
+        (gt.side = 1 AND g.winner = '1') OR
+        (gt.side = 2 AND g.winner = '2')
+    ) AS won
+    FROM game_teams gt
+    JOIN games g ON g.ID = gt.game_id
+    CROSS JOIN LATERAL unnest(gt.picks) WITH ORDINALITY AS p(champ, idx)
+    JOIN LATERAL unnest(gt.roles) WITH ORDINALITY AS r(role, idx) ON r.idx = p.idx 
 ),
 agg AS (
     SELECT champ,

@@ -35,47 +35,25 @@ type ChampionsDatum struct {
 }
 
 type Game struct {
-	ID                    int32
-	Patch                 sql.NullString
-	Tournament            string
-	Team1Role1            string
-	Team1Role2            string
-	Team1Role3            string
-	Team1Role4            string
-	Team1Role5            string
-	Team2Role1            string
-	Team2Role2            string
-	Team2Role3            string
-	Team2Role4            string
-	Team2Role5            string
-	Team1Ban1             string
-	Team1Ban2             string
-	Team1Ban3             string
-	Team1Ban4             string
-	Team1Ban5             string
-	Team1Pick1            string
-	Team1Pick2            string
-	Team1Pick3            string
-	Team1Pick4            string
-	Team1Pick5            string
-	Team2Ban1             string
-	Team2Ban2             string
-	Team2Ban3             string
-	Team2Ban4             string
-	Team2Ban5             string
-	Team2Pick1            string
-	Team2Pick2            string
-	Team2Pick3            string
-	Team2Pick4            string
-	Team2Pick5            string
-	Team1                 string
-	Team2                 string
-	Winner                string
-	Team1PicksByRoleOrder string
-	Team2PicksByRoleOrder string
-	GameID                string
-	MatchID               string
-	DateTimeUtc           time.Time
+	ID          int32
+	Patch       sql.NullString
+	Tournament  string
+	Team1       string
+	Team2       string
+	Winner      string
+	GameID      string
+	MatchID     string
+	DateTimeUtc time.Time
+}
+
+type GameTeam struct {
+	ID     int32
+	GameID int32
+	Side   int32
+	Name   string
+	Roles  []string
+	Picks  []string
+	Bans   []string
 }
 
 type UpdateLog struct {

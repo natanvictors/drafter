@@ -12,45 +12,57 @@ import (
 	"github.com/lib/pq"
 )
 
-const upsertGames = `-- name: UpsertGames :exec
+const upsertGameTeams = `-- name: UpsertGameTeams :exec
+INSERT INTO game_teams (
+    game_id,
+    side,
+    name,
+    roles,
+    picks,
+    bans
+)
+SELECT
+    unnest($1::int[]),
+    unnest($2::int[]),
+    unnest($3::text[]),
+    unnest($4::text[][]),
+    unnest($5::text[][]),
+    unnest($6::text[][])
+ON CONFLICT (game_id, side) DO UPDATE SET
+    name = EXCLUDED.name,
+    roles = EXCLUDED.roles,
+    picks = EXCLUDED.picks,
+    bans = EXCLUDED.bans
+`
+
+type UpsertGameTeamsParams struct {
+	Column1 []int32
+	Column2 []int32
+	Column3 []string
+	Column4 [][]string
+	Column5 [][]string
+	Column6 [][]string
+}
+
+func (q *Queries) UpsertGameTeams(ctx context.Context, arg UpsertGameTeamsParams) error {
+	_, err := q.db.ExecContext(ctx, upsertGameTeams,
+		pq.Array(arg.Column1),
+		pq.Array(arg.Column2),
+		pq.Array(arg.Column3),
+		pq.Array(arg.Column4),
+		pq.Array(arg.Column5),
+		pq.Array(arg.Column6),
+	)
+	return err
+}
+
+const upsertGames = `-- name: UpsertGames :many
 INSERT INTO games (
     tournament,
 	patch,
-    team1_role1,
-    team1_role2,
-    team1_role3,
-    team1_role4,
-    team1_role5,
-    team2_role1,
-    team2_role2,
-    team2_role3,
-    team2_role4,
-    team2_role5,
-    team1_ban1,
-    team1_ban2,
-    team1_ban3,
-    team1_ban4,
-    team1_ban5,
-    team1_pick1,
-    team1_pick2,
-    team1_pick3,
-    team1_pick4,
-    team1_pick5,
-    team2_ban1,
-    team2_ban2,
-    team2_ban3,
-    team2_ban4,
-    team2_ban5,
-    team2_pick1,
-    team2_pick2,
-    team2_pick3,
-    team2_pick4,
-    team2_pick5,
     team1,
     team2,
     winner,
-    team1_picks_by_role_order,
-    team2_picks_by_role_order,
     game_id,
     match_id,
     date_time_utc
@@ -63,126 +75,36 @@ SELECT
     unnest($5::text[]),
     unnest($6::text[]),
     unnest($7::text[]),
-    unnest($8::text[]),
-    unnest($9::text[]),
-    unnest($10::text[]),
-    unnest($11::text[]),
-    unnest($12::text[]),
-    unnest($13::text[]),
-    unnest($14::text[]),
-    unnest($15::text[]),
-    unnest($16::text[]),
-    unnest($17::text[]),
-    unnest($18::text[]),
-    unnest($19::text[]),
-    unnest($20::text[]),
-    unnest($21::text[]),
-    unnest($22::text[]),
-    unnest($23::text[]),
-    unnest($24::text[]),
-    unnest($25::text[]),
-    unnest($26::text[]),
-    unnest($27::text[]),
-    unnest($28::text[]),
-    unnest($29::text[]),
-    unnest($30::text[]),
-    unnest($31::text[]),
-    unnest($32::text[]),
-    unnest($33::text[]),
-    unnest($34::text[]),
-    unnest($35::text[]),
-    unnest($36::text[]),
-    unnest($37::text[]),
-    unnest($38::text[]),
-    unnest($39::text[]),
-    unnest($40::timestamptz[])
+    unnest($8::timestamptz[])
 ON CONFLICT (game_id) DO UPDATE SET
     tournament                = EXCLUDED.tournament,
 	patch                     = EXCLUDED.patch,
-    team1_role1               = EXCLUDED.team1_role1,
-    team1_role2               = EXCLUDED.team1_role2,
-    team1_role3               = EXCLUDED.team1_role3,
-    team1_role4               = EXCLUDED.team1_role4,
-    team1_role5               = EXCLUDED.team1_role5,
-    team2_role1               = EXCLUDED.team2_role1,
-    team2_role2               = EXCLUDED.team2_role2,
-    team2_role3               = EXCLUDED.team2_role3,
-    team2_role4               = EXCLUDED.team2_role4,
-    team2_role5               = EXCLUDED.team2_role5,
-    team1_ban1                = EXCLUDED.team1_ban1,
-    team1_ban2                = EXCLUDED.team1_ban2,
-    team1_ban3                = EXCLUDED.team1_ban3,
-    team1_ban4                = EXCLUDED.team1_ban4,
-    team1_ban5                = EXCLUDED.team1_ban5,
-    team1_pick1               = EXCLUDED.team1_pick1,
-    team1_pick2               = EXCLUDED.team1_pick2,
-    team1_pick3               = EXCLUDED.team1_pick3,
-    team1_pick4               = EXCLUDED.team1_pick4,
-    team1_pick5               = EXCLUDED.team1_pick5,
-    team2_ban1                = EXCLUDED.team2_ban1,
-    team2_ban2                = EXCLUDED.team2_ban2,
-    team2_ban3                = EXCLUDED.team2_ban3,
-    team2_ban4                = EXCLUDED.team2_ban4,
-    team2_ban5                = EXCLUDED.team2_ban5,
-    team2_pick1               = EXCLUDED.team2_pick1,
-    team2_pick2               = EXCLUDED.team2_pick2,
-    team2_pick3               = EXCLUDED.team2_pick3,
-    team2_pick4               = EXCLUDED.team2_pick4,
-    team2_pick5               = EXCLUDED.team2_pick5,
     team1                     = EXCLUDED.team1,
     team2                     = EXCLUDED.team2,
     winner                    = EXCLUDED.winner,
-    team1_picks_by_role_order = EXCLUDED.team1_picks_by_role_order,
-    team2_picks_by_role_order = EXCLUDED.team2_picks_by_role_order,
     match_id                  = EXCLUDED.match_id,
     date_time_utc             = EXCLUDED.date_time_utc
+RETURNING ID, game_id
 `
 
 type UpsertGamesParams struct {
-	Column1  []string
-	Column2  []string
-	Column3  []string
-	Column4  []string
-	Column5  []string
-	Column6  []string
-	Column7  []string
-	Column8  []string
-	Column9  []string
-	Column10 []string
-	Column11 []string
-	Column12 []string
-	Column13 []string
-	Column14 []string
-	Column15 []string
-	Column16 []string
-	Column17 []string
-	Column18 []string
-	Column19 []string
-	Column20 []string
-	Column21 []string
-	Column22 []string
-	Column23 []string
-	Column24 []string
-	Column25 []string
-	Column26 []string
-	Column27 []string
-	Column28 []string
-	Column29 []string
-	Column30 []string
-	Column31 []string
-	Column32 []string
-	Column33 []string
-	Column34 []string
-	Column35 []string
-	Column36 []string
-	Column37 []string
-	Column38 []string
-	Column39 []string
-	Column40 []time.Time
+	Column1 []string
+	Column2 []string
+	Column3 []string
+	Column4 []string
+	Column5 []string
+	Column6 []string
+	Column7 []string
+	Column8 []time.Time
 }
 
-func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) error {
-	_, err := q.db.ExecContext(ctx, upsertGames,
+type UpsertGamesRow struct {
+	ID     int32
+	GameID string
+}
+
+func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) ([]UpsertGamesRow, error) {
+	rows, err := q.db.QueryContext(ctx, upsertGames,
 		pq.Array(arg.Column1),
 		pq.Array(arg.Column2),
 		pq.Array(arg.Column3),
@@ -191,38 +113,24 @@ func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) error 
 		pq.Array(arg.Column6),
 		pq.Array(arg.Column7),
 		pq.Array(arg.Column8),
-		pq.Array(arg.Column9),
-		pq.Array(arg.Column10),
-		pq.Array(arg.Column11),
-		pq.Array(arg.Column12),
-		pq.Array(arg.Column13),
-		pq.Array(arg.Column14),
-		pq.Array(arg.Column15),
-		pq.Array(arg.Column16),
-		pq.Array(arg.Column17),
-		pq.Array(arg.Column18),
-		pq.Array(arg.Column19),
-		pq.Array(arg.Column20),
-		pq.Array(arg.Column21),
-		pq.Array(arg.Column22),
-		pq.Array(arg.Column23),
-		pq.Array(arg.Column24),
-		pq.Array(arg.Column25),
-		pq.Array(arg.Column26),
-		pq.Array(arg.Column27),
-		pq.Array(arg.Column28),
-		pq.Array(arg.Column29),
-		pq.Array(arg.Column30),
-		pq.Array(arg.Column31),
-		pq.Array(arg.Column32),
-		pq.Array(arg.Column33),
-		pq.Array(arg.Column34),
-		pq.Array(arg.Column35),
-		pq.Array(arg.Column36),
-		pq.Array(arg.Column37),
-		pq.Array(arg.Column38),
-		pq.Array(arg.Column39),
-		pq.Array(arg.Column40),
 	)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UpsertGamesRow
+	for rows.Next() {
+		var i UpsertGamesRow
+		if err := rows.Scan(&i.ID, &i.GameID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
