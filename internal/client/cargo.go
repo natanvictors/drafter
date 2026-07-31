@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"time"
 
 	"github.com/natanvictors/drafter/internal/parser"
 )
@@ -14,6 +15,18 @@ type Client struct {
 	http     *http.Client
 	user     string
 	password string
+}
+
+type RequestInfo struct {
+	URL        string
+	Maxretries int
+	retries    int
+	Interval   int
+}
+
+func (info *RequestInfo) addRetry() *RequestInfo {
+	info.retries++
+	return info
 }
 
 func New(user string, password string) (*Client, error) {
@@ -29,20 +42,37 @@ func New(user string, password string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Fetch(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+func (c *Client) FetchAndParse(info RequestInfo) (parser.Cargoresult, error) {
+	req, err := http.NewRequest("GET", info.URL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return parser.Cargoresult{}, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("User-Agent", "drafter/1.0")
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch url: %w", err)
+		return parser.Cargoresult{}, fmt.Errorf("failed to fetch url: %w", err)
 	}
 	defer resp.Body.Close()
 
-	return io.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
+
+	result, err := parser.ParseCargo(data)
+	if err != nil {
+		return parser.Cargoresult{}, fmt.Errorf("parse failed: %s", err)
+	}
+
+	if result.Cargoerror != nil {
+		if info.retries > info.Maxretries {
+			return parser.Cargoresult{}, fmt.Errorf("couldnt fetch after %d retries", info.Maxretries)
+		}
+		fmt.Println("fetch failed:", result.Cargoerror.Code, ". retrying...")
+		info.addRetry()
+		time.Sleep(time.Duration(info.Interval) * time.Second)
+		return c.FetchAndParse(info)
+	}
+
+	return *result, nil
 }
 
 func (c *Client) Login() error {

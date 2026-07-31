@@ -62,6 +62,7 @@ func main() {
 
 	addChampionsToDB(ctx, *qtx)
 	for _, region := range regions {
+		fmt.Println("Migrating games from", region)
 		//record, err := qtx.GetUpdateRecord(ctx, region)
 		// timeUntilUpdate := updateInterval - time.Since(record.LastUpdatedAt)
 		// if err == nil && timeUntilUpdate > 0 {
@@ -83,27 +84,28 @@ func updateChampionData(ctx context.Context, qtx *db.Queries, region string, c *
 		"fields":   {"ScoreboardGames.Patch,PicksAndBansS7._pageName=Page,PicksAndBansS7.Team1Role1,PicksAndBansS7.Team1Role2,PicksAndBansS7.Team1Role3,PicksAndBansS7.Team1Role4,PicksAndBansS7.Team1Role5,PicksAndBansS7.Team2Role1,PicksAndBansS7.Team2Role2,PicksAndBansS7.Team2Role3,PicksAndBansS7.Team2Role4,PicksAndBansS7.Team2Role5,PicksAndBansS7.Team1Ban1,PicksAndBansS7.Team1Ban2,PicksAndBansS7.Team1Ban3,PicksAndBansS7.Team1Ban4,PicksAndBansS7.Team1Ban5,PicksAndBansS7.Team1Pick1,PicksAndBansS7.Team1Pick2,PicksAndBansS7.Team1Pick3,PicksAndBansS7.Team1Pick4,PicksAndBansS7.Team1Pick5,PicksAndBansS7.Team2Ban1,PicksAndBansS7.Team2Ban2,PicksAndBansS7.Team2Ban3,PicksAndBansS7.Team2Ban4,PicksAndBansS7.Team2Ban5,PicksAndBansS7.Team2Pick1,PicksAndBansS7.Team2Pick2,PicksAndBansS7.Team2Pick3,PicksAndBansS7.Team2Pick4,PicksAndBansS7.Team2Pick5,PicksAndBansS7.Team1,PicksAndBansS7.Team2,PicksAndBansS7.Winner,PicksAndBansS7.Team1PicksByRoleOrder,PicksAndBansS7.Team2PicksByRoleOrder,PicksAndBansS7.GameId,PicksAndBansS7.MatchId,ScoreboardGames.DateTime_UTC"},
 		"join_on":  {"PicksAndBansS7.GameId=ScoreboardGames.GameId"},
 		"order_by": {"ScoreboardGames.DateTime_UTC DESC"},
-		"limit":    {"200"},
+		"limit":    {"1000"},
 	}
 
 	urlValues.Set("where", fmt.Sprintf("PicksAndBansS7._pageName LIKE '%%%s/2026%%' AND ScoreboardGames.DateTime_UTC IS NOT NULL AND PicksAndBansS7.Winner != ''", region))
-	resp, err := c.Fetch("https://lol.fandom.com/api.php?" + urlValues.Encode())
-	if err != nil {
-		log.Println(err)
+
+	info := cargo.RequestInfo{
+		URL:        "https://lol.fandom.com/api.php?" + urlValues.Encode(),
+		Maxretries: 3,
+		Interval:   5,
 	}
-	body, err := parser.ParseCargo(resp)
+
+	body, err := c.FetchAndParse(info)
 	if err != nil {
-		log.Println("parse error:", err)
+		log.Fatal("fetch failed: ", err)
 	}
-	fmt.Println("https://lol.fandom.com/api.php?" + urlValues.Encode())
+
 	log.Printf("Games found for %s: %d\n", region, len(body.Cargoresponse))
 
 	params := db.UpsertGamesParams{}
 
 	for _, game := range body.Cargoresponse {
 		t := game.Title
-
-		log.Printf("Page: %q", t.Page)
 
 		params.Column1 = append(params.Column1, t.Page)
 		params.Column2 = append(params.Column2, t.Patch)

@@ -2,7 +2,6 @@ package parser
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type Cargoresult struct {
@@ -69,9 +68,6 @@ func ParseCargo(data []byte) (*Cargoresult, error) {
 	err := json.Unmarshal(data, &cargoquery)
 	if err != nil {
 		return nil, err
-	}
-	if cargoquery.Cargoerror != nil {
-		return nil, fmt.Errorf("cargoquery error: %x", cargoquery.Cargoerror.Code)
 	}
 	return &cargoquery, nil
 }
