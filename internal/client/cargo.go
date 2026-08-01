@@ -44,6 +44,7 @@ func New(user string, password string) (*Client, error) {
 
 func (c *Client) FetchAndParse(info RequestInfo) (parser.Cargoresult, error) {
 	req, err := http.NewRequest("GET", info.URL, nil)
+	//fmt.Println(info.URL)
 	if err != nil {
 		return parser.Cargoresult{}, fmt.Errorf("failed to create request: %w", err)
 	}
