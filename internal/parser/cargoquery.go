@@ -22,12 +22,9 @@ type Cargoerror struct {
 type Game struct {
 	Championship string `json:"Page"`
 	Patch        string `json:"Patch"`
-	Team1        string `json:"Team1"`
-	Team2        string `json:"Team2"`
 	Winner       string `json:"Winner"`
 	GameID       string `json:"GameId"`
 	MatchID      string `json:"MatchId"`
-	DateTimeUTC  string `json:"DateTime UTC"`
 	Team1Role1   string `json:"Team1Role1"`
 	Team1Role2   string `json:"Team1Role2"`
 	Team1Role3   string `json:"Team1Role3"`
@@ -62,13 +59,13 @@ type Game struct {
 
 func (g Game) Teams() (team1, team2 Team) {
 	team1 = Team{
-		Name:  g.Team1,
-		Roles: []string{g.Team1Ban1, g.Team1Ban2, g.Team1Ban3, g.Team1Ban4, g.Team1Ban5},
+		Side:  1,
+		Roles: []string{g.Team1Role1, g.Team1Role2, g.Team1Role3, g.Team1Role4, g.Team1Role5},
 		Picks: []string{g.Team1Pick1, g.Team1Pick2, g.Team1Pick3, g.Team1Pick4, g.Team1Pick5},
 		Bans:  []string{g.Team1Ban1, g.Team1Ban2, g.Team1Ban3, g.Team1Ban4, g.Team1Ban5},
 	}
 	team2 = Team{
-		Name:  g.Team2,
+		Side:  2,
 		Roles: []string{g.Team2Role1, g.Team2Role2, g.Team2Role3, g.Team2Role4, g.Team2Role5},
 		Picks: []string{g.Team2Pick1, g.Team2Pick2, g.Team2Pick3, g.Team2Pick4, g.Team2Pick5},
 		Bans:  []string{g.Team2Ban1, g.Team2Ban2, g.Team2Ban3, g.Team2Ban4, g.Team2Ban5},
@@ -79,6 +76,7 @@ func (g Game) Teams() (team1, team2 Team) {
 
 type Team struct {
 	Name  string
+	Side  int
 	Roles []string
 	Picks []string
 	Bans  []string
@@ -86,6 +84,7 @@ type Team struct {
 
 func ParseCargo(data []byte) (*Cargoresult, error) {
 	var cargoquery Cargoresult
+	//log.Printf("%s\n", data)
 	err := json.Unmarshal(data, &cargoquery)
 	if err != nil {
 		return nil, err

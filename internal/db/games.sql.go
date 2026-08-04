@@ -7,14 +7,12 @@ package db
 
 import (
 	"context"
-	"time"
 
 	"github.com/lib/pq"
 )
 
-const upsertGameTeams = `-- name: UpsertGameTeams :exec
+const upsertGameTeams = `-- name: UpsertGameTeams :many
 INSERT INTO game_teams (
-    game_id,
     side,
     name,
     roles,
@@ -23,37 +21,48 @@ INSERT INTO game_teams (
 )
 SELECT
     unnest($1::int[]),
-    unnest($2::int[]),
-    unnest($3::text[]),
-    unnest($4::text[][]),
-    unnest($5::text[][]),
-    unnest($6::text[][])
-ON CONFLICT (game_id, side) DO UPDATE SET
-    name = EXCLUDED.name,
-    roles = EXCLUDED.roles,
-    picks = EXCLUDED.picks,
-    bans = EXCLUDED.bans
+    unnest($2::text[]),
+    unnest($3::text[])::text[],
+    unnest($4::text[])::text[],
+    unnest($5::text[])::text[]
+RETURNING ID
 `
 
 type UpsertGameTeamsParams struct {
 	Column1 []int32
-	Column2 []int32
+	Column2 []string
 	Column3 []string
-	Column4 [][]string
-	Column5 [][]string
-	Column6 [][]string
+	Column4 []string
+	Column5 []string
 }
 
-func (q *Queries) UpsertGameTeams(ctx context.Context, arg UpsertGameTeamsParams) error {
-	_, err := q.db.ExecContext(ctx, upsertGameTeams,
+func (q *Queries) UpsertGameTeams(ctx context.Context, arg UpsertGameTeamsParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, upsertGameTeams,
 		pq.Array(arg.Column1),
 		pq.Array(arg.Column2),
 		pq.Array(arg.Column3),
 		pq.Array(arg.Column4),
 		pq.Array(arg.Column5),
-		pq.Array(arg.Column6),
 	)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const upsertGames = `-- name: UpsertGames :many
@@ -64,46 +73,37 @@ INSERT INTO games (
     team2,
     winner,
     game_id,
-    match_id,
-    date_time_utc
+    match_id
 )
 SELECT
     unnest($1::text[]),
     unnest($2::text[]),
-    unnest($3::text[]),
-    unnest($4::text[]),
+    unnest($3::int[]),
+    unnest($4::int[]),
     unnest($5::text[]),
     unnest($6::text[]),
-    unnest($7::text[]),
-    unnest($8::timestamptz[])
+    unnest($7::text[])
 ON CONFLICT (game_id) DO UPDATE SET
     tournament                = EXCLUDED.tournament,
 	patch                     = EXCLUDED.patch,
     team1                     = EXCLUDED.team1,
     team2                     = EXCLUDED.team2,
     winner                    = EXCLUDED.winner,
-    match_id                  = EXCLUDED.match_id,
-    date_time_utc             = EXCLUDED.date_time_utc
-RETURNING ID, game_id
+    match_id                  = EXCLUDED.match_id
+RETURNING ID
 `
 
 type UpsertGamesParams struct {
 	Column1 []string
 	Column2 []string
-	Column3 []string
-	Column4 []string
+	Column3 []int32
+	Column4 []int32
 	Column5 []string
 	Column6 []string
 	Column7 []string
-	Column8 []time.Time
 }
 
-type UpsertGamesRow struct {
-	ID     int32
-	GameID string
-}
-
-func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) ([]UpsertGamesRow, error) {
+func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, upsertGames,
 		pq.Array(arg.Column1),
 		pq.Array(arg.Column2),
@@ -112,19 +112,18 @@ func (q *Queries) UpsertGames(ctx context.Context, arg UpsertGamesParams) ([]Ups
 		pq.Array(arg.Column5),
 		pq.Array(arg.Column6),
 		pq.Array(arg.Column7),
-		pq.Array(arg.Column8),
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UpsertGamesRow
+	var items []int32
 	for rows.Next() {
-		var i UpsertGamesRow
-		if err := rows.Scan(&i.ID, &i.GameID); err != nil {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

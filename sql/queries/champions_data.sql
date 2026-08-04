@@ -4,14 +4,15 @@ DELETE FROM champions_data;
 -- name: UpdateChampionStats :exec
 
 WITH picks AS (
-    SELECT p.champ, p.role (
+    SELECT
+        p.champ,
+        r.role,
         (gt.side = 1 AND g.winner = '1') OR
-        (gt.side = 2 AND g.winner = '2')
-    ) AS won
-    FROM game_teams gt
-    JOIN games g ON g.ID = gt.game_id
+        (gt.side = 2 AND g.winner = '2') AS won
+    FROM games g
+    JOIN game_teams gt ON gt.id IN (g.team1, g.team2)
     CROSS JOIN LATERAL unnest(gt.picks) WITH ORDINALITY AS p(champ, idx)
-    JOIN LATERAL unnest(gt.roles) WITH ORDINALITY AS r(role, idx) ON r.idx = p.idx 
+    JOIN LATERAL unnest(gt.roles) WITH ORDINALITY AS r(role, idx) ON r.idx = p.idx
 ),
 agg AS (
     SELECT champ,

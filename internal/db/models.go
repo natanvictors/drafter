@@ -35,25 +35,23 @@ type ChampionsDatum struct {
 }
 
 type Game struct {
-	ID          int32
-	Patch       sql.NullString
-	Tournament  string
-	Team1       string
-	Team2       string
-	Winner      string
-	GameID      string
-	MatchID     string
-	DateTimeUtc time.Time
+	ID         int32
+	Patch      sql.NullString
+	Tournament sql.NullString
+	Team1      sql.NullInt32
+	Team2      sql.NullInt32
+	Winner     string
+	GameID     string
+	MatchID    string
 }
 
 type GameTeam struct {
-	ID     int32
-	GameID int32
-	Side   int32
-	Name   string
-	Roles  []string
-	Picks  []string
-	Bans   []string
+	ID    int32
+	Side  int32
+	Name  string
+	Roles []string
+	Picks []string
+	Bans  []string
 }
 
 type UpdateLog struct {
