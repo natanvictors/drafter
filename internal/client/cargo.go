@@ -24,9 +24,8 @@ type RequestInfo struct {
 	Interval   int
 }
 
-func (info *RequestInfo) addRetry() *RequestInfo {
+func (info *RequestInfo) addRetry() {
 	info.retries++
-	return info
 }
 
 func New(user string, password string) (*Client, error) {
@@ -43,37 +42,39 @@ func New(user string, password string) (*Client, error) {
 }
 
 func (c *Client) FetchAndParse(info RequestInfo) (parser.Cargoresult, error) {
-	req, err := http.NewRequest("GET", info.URL, nil)
-	//fmt.Println(info.URL)
-	if err != nil {
-		return parser.Cargoresult{}, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("User-Agent", "drafter/1.0")
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return parser.Cargoresult{}, fmt.Errorf("failed to fetch url: %w", err)
-	}
-	defer resp.Body.Close()
-
-	data, err := io.ReadAll(resp.Body)
-
-	result, err := parser.ParseCargo(data)
-	if err != nil {
-		return parser.Cargoresult{}, fmt.Errorf("parse failed: %s", err)
-	}
-
-	if result.Cargoerror != nil {
-		if info.retries > info.Maxretries {
-			return parser.Cargoresult{}, fmt.Errorf("couldnt fetch after %d retries", info.Maxretries)
+	for {
+		req, err := http.NewRequest("GET", info.URL, nil)
+		//fmt.Println(info.URL)
+		if err != nil {
+			return parser.Cargoresult{}, fmt.Errorf("failed to create request: %w", err)
 		}
-		fmt.Println("fetch failed:", result.Cargoerror.Code, ". retrying...")
+		req.Header.Set("User-Agent", "drafter/1.0")
+
+		resp, err := c.http.Do(req)
+		if err != nil {
+			return parser.Cargoresult{}, fmt.Errorf("failed to fetch url: %w", err)
+		}
+		defer resp.Body.Close()
+
+		data, err := io.ReadAll(resp.Body)
+
+		result, err := parser.ParseCargo(data)
+		if err != nil {
+			return parser.Cargoresult{}, fmt.Errorf("parse failed: %s", err)
+		}
+
+		if result.Cargoerror == nil {
+			return *result, nil
+		}
+
+		if info.retries >= info.Maxretries {
+			return parser.Cargoresult{}, fmt.Errorf("couldnt fetch after %d retries", info.retries)
+		}
+
+		fmt.Println("fetch failed: ", result.Cargoerror.Code, "retrying...")
 		info.addRetry()
 		time.Sleep(time.Duration(info.Interval) * time.Second)
-		return c.FetchAndParse(info)
 	}
-
-	return *result, nil
 }
 
 func (c *Client) Login() error {
@@ -92,7 +93,6 @@ func (c *Client) Login() error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
 
 	_, err = c.http.PostForm("https://lol.fandom.com/api.php", url.Values{
 		"action":     {"login"},
