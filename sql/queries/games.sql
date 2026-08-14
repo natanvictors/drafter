@@ -25,6 +25,14 @@ ON CONFLICT (game_id) DO UPDATE SET
     match_id                  = EXCLUDED.match_id
 RETURNING ID;
 
+-- name: DeleteOrphanedGameTeams :exec
+DELETE FROM game_teams
+WHERE ID NOT IN (
+    SELECT team1 FROM games WHERE team1 IS NOT NULL
+    UNION
+    SELECT team2 FROM games WHERE team2 IS NOT NULL
+);
+
 -- name: UpsertGameTeams :many
 INSERT INTO game_teams (
     side,

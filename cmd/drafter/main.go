@@ -160,6 +160,10 @@ func updateChampionData(ctx context.Context, qtx *db.Queries, region string, c *
 		log.Println("UpsertGames failed:", err)
 	}
 
+	if err := qtx.DeleteOrphanedGameTeams(ctx); err != nil {
+		log.Println("failed to clean up orphaned game_teams:", err)
+	}
+
 	err = qtx.UpsertRecord(ctx, db.UpsertRecordParams{
 		Region:        region,
 		LastUpdatedAt: time.Now(),

@@ -11,6 +11,20 @@ import (
 	"github.com/lib/pq"
 )
 
+const deleteOrphanedGameTeams = `-- name: DeleteOrphanedGameTeams :exec
+DELETE FROM game_teams
+WHERE ID NOT IN (
+    SELECT team1 FROM games WHERE team1 IS NOT NULL
+    UNION
+    SELECT team2 FROM games WHERE team2 IS NOT NULL
+)
+`
+
+func (q *Queries) DeleteOrphanedGameTeams(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteOrphanedGameTeams)
+	return err
+}
+
 const upsertGameTeams = `-- name: UpsertGameTeams :many
 INSERT INTO game_teams (
     side,

@@ -72,3 +72,4 @@ agg AS (
     a.losses_sup
 FROM agg a
 JOIN champions c ON c.champ_name = a.champ;
+
