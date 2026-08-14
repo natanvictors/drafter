@@ -12,13 +12,16 @@ services:
       - drafter_postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 1m30s
-      timeout: 30s
+      interval: 5s
+      timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 10s
   drafter:
     build: .
     container_name: drafter
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       - DB_URL=postgresql://postgres:whateva@postgres:5432/drafter?sslmode=disable
     env_file: .env
