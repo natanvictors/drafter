@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/natanvictors/drafter/internal/parser"
 )
@@ -18,10 +19,11 @@ const (
 
 	// gamesLimit is the max number of games returned per region. There is no
 	// pagination yet, so only the most recent gamesLimit games are fetched.
-	gamesLimit = 200
+	gamesLimit = 1000
 
 	maxRetries    = 3
 	retryInterval = 5 // seconds
+	pageSize      = 500
 )
 
 // numbered returns prefix1..prefixN (e.g. "Team1Pick1".."Team1Pick5").
@@ -65,7 +67,7 @@ func gameFields() []string {
 
 // gamesURL builds the Cargo query for the most recent finished games of a
 // region (e.g. "LCK").
-func gamesURL(region string) string {
+func gamesURL(region string, offset int) string {
 	values := url.Values{
 		"action":   {"cargoquery"},
 		"format":   {"json"},
@@ -74,6 +76,7 @@ func gamesURL(region string) string {
 		"join_on":  {"PicksAndBansS7.GameId=ScoreboardGames.GameId"},
 		"order_by": {"ScoreboardGames.DateTime_UTC DESC"},
 		"limit":    {strconv.Itoa(gamesLimit)},
+		"offset":   {strconv.Itoa(offset)},
 	}
 	values.Set("where", fmt.Sprintf(
 		"PicksAndBansS7._pageName LIKE '%%%s/%s%%' AND ScoreboardGames.DateTime_UTC IS NOT NULL AND PicksAndBansS7.Winner != ''",
@@ -86,9 +89,33 @@ func gamesURL(region string) string {
 // GamesByRegion fetches the picks, bans and results of the most recent games
 // of a region (e.g. "LCK") from the Leaguepedia Cargo API.
 func (c *Client) GamesByRegion(region string) (parser.Cargoresult, error) {
-	return c.FetchAndParse(RequestInfo{
-		URL:        gamesURL(region),
-		Maxretries: maxRetries,
-		Interval:   retryInterval,
-	})
+
+	var result parser.Cargoresult
+
+	seen := make(map[string]bool)
+
+	for offset := 0; ; offset += pageSize {
+		page, err := c.FetchAndParse(RequestInfo{
+			URL:        gamesURL(region, offset),
+			Maxretries: maxRetries,
+			Interval:   retryInterval,
+		})
+		if err != nil {
+			return parser.Cargoresult{}, err
+		}
+
+		for _, game := range page.Cargoresponse {
+			if seen[game.Game.GameID] {
+				continue
+			}
+			seen[game.Game.GameID] = true
+			result.Cargoresponse = append(result.Cargoresponse, game)
+		}
+		if len(page.Cargoresponse) < pageSize {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+
+	return result, nil
 }
