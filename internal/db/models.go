@@ -14,6 +14,15 @@ type Champion struct {
 	ChampName string
 }
 
+type ChampionPatchStat struct {
+	ChampID     int32
+	Role        string
+	Patch       string
+	Wins        int32
+	Losses      int32
+	TimesPicked int32
+}
+
 type ChampionsDatum struct {
 	ChampID      int32
 	TimesPicked  sql.NullInt32

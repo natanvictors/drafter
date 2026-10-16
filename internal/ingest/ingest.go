@@ -125,6 +125,12 @@ func (i *Ingester) refreshChampionStats(ctx context.Context) error {
 	if err := i.queries.UpdateChampionStats(ctx); err != nil {
 		return fmt.Errorf("failed to update champion stats: %w", err)
 	}
+	if err := i.queries.ClearChampionPatchStats(ctx); err != nil {
+		return fmt.Errorf("failed to clear champion patch stats: %w", err)
+	}
+	if err := i.queries.UpdateChampionPatchStats(ctx); err != nil {
+		return fmt.Errorf("failed to update champion patch stats: %w", err)
+	}
 
 	fmt.Println("Updated succesfully!")
 	return nil
