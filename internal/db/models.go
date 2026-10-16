@@ -23,26 +23,6 @@ type ChampionPatchStat struct {
 	TimesPicked int32
 }
 
-type ChampionsDatum struct {
-	ChampID      int32
-	TimesPicked  sql.NullInt32
-	PickedTop    sql.NullInt32
-	PickedJungle sql.NullInt32
-	PickedMid    sql.NullInt32
-	PickedAdc    sql.NullInt32
-	PickedSup    sql.NullInt32
-	WinsTop      sql.NullInt32
-	LossesTop    sql.NullInt32
-	WinsJg       sql.NullInt32
-	LossesJg     sql.NullInt32
-	WinsMid      sql.NullInt32
-	LossesMid    sql.NullInt32
-	WinsAdc      sql.NullInt32
-	LossesAdc    sql.NullInt32
-	WinsSup      sql.NullInt32
-	LossesSup    sql.NullInt32
-}
-
 type Game struct {
 	ID         int32
 	Patch      sql.NullString

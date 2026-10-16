@@ -119,12 +119,6 @@ func (i *Ingester) Region(ctx context.Context, region string) error {
 
 // refreshChampionStats recomputes the per-champion pick/win/loss counters.
 func (i *Ingester) refreshChampionStats(ctx context.Context) error {
-	if err := i.queries.ClearChampionStats(ctx); err != nil {
-		return fmt.Errorf("failed to clear champion stats: %w", err)
-	}
-	if err := i.queries.UpdateChampionStats(ctx); err != nil {
-		return fmt.Errorf("failed to update champion stats: %w", err)
-	}
 	if err := i.queries.ClearChampionPatchStats(ctx); err != nil {
 		return fmt.Errorf("failed to clear champion patch stats: %w", err)
 	}

@@ -2,13 +2,14 @@
 DELETE FROM champion_patch_stats;
 
 -- name: UpdateChampionPatchStats :exec
-INSERT INTO champion_patch_stats (champ_id, role, patch, wins, losses)
+INSERT INTO champion_patch_stats (champ_id, role, patch, wins, losses, times_picked)
 SELECT
     c.id,
     p.role,
     p.patch,
     COUNT(*) FILTER (WHERE p.won),
-    COUNT(*) FILTER (WHERE NOT p.won)
+    COUNT(*) FILTER (WHERE NOT p.won),
+    COUNT(*)
 FROM (
     SELECT
         pk.champ,
